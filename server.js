@@ -1,8 +1,10 @@
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first')
+
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const path = require('path');
-const bodyParser = require('body-parser');
 const compression = require('compression');
 const blogRoute = require("./routes/blog.route.js");
 const authRoute = require("./routes/auth.route.js");
@@ -16,7 +18,6 @@ app.use(compression({
 
 // middleware
 app.use(express.json());
-app.use(bodyParser.json());
 
 // static file caching
 app.use(express.static(path.join(__dirname, 'PUBLIC'), {
@@ -77,6 +78,6 @@ mongoose
       console.log("Server is running on port :", port);
     });
   })
-  .catch(() => {
-    console.log("Connection Failed.");
+  .catch((error) => {
+    console.log("Connection Failed.", error);
   });
