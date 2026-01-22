@@ -6,27 +6,19 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  fetch("/api/auth/verifyToken", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token,
-    },
-    body: JSON.stringify({ token }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (!data.valid) {
-        localStorage.removeItem("authToken");
-        console.log("Invalid Token, redirecting to /signin");
-        window.location.href = "/signin";
-      }
-    })
-    .catch((error) => {
+  // checks token expiry on client side
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (Date.now() >= payload.exp * 1000) {
       localStorage.removeItem("authToken");
-      console.error("Token verification err:", error);
       window.location.href = "/signin";
-    });
+      return;
+    }
+  } catch (e) {
+    localStorage.removeItem("authToken");
+    window.location.href = "/signin";
+    return;
+  }
 });
 
 const numberWords = [
@@ -304,8 +296,14 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    xhr.open("POST", "https://www.thebitbytebit.tech/api/blogs", true);
+    xhr.open("POST", "/api/blogs", true);
     xhr.setRequestHeader("Content-Type", "application/json");
+    
+    // add auth token to req
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    }
 
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 201)) {
@@ -315,7 +313,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const blogId = response._id;
 
         if (blogId) {
-          window.location.href = `https://www.thebitbytebit.tech/blog/${blogId}`;
+          window.location.href = `/blog/${blogId}`;
         } else {
           console.error("blogId not found in response.");
         }
